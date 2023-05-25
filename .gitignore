@@ -1,0 +1,11 @@
+*
+!/.gitignore
+!/readme.md
+
+!/index.html
+!/main.js
+!/config.js
+!/engine.js
+!/oauth.js
+!/fetch.js
+!/kv.js
