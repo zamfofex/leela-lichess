@@ -28,7 +28,7 @@ let base64 = bytes =>
 
 let encoder = new TextEncoder()
 
-let decline = event => event.respondWith(Response.redirect(helpURL, 303))
+let decline = () => Response.redirect(helpURL, 303)
 
 let verifiers = new Map()
 
@@ -49,34 +49,22 @@ export let listenAuth = async ({host = "0.0.0.0", cert, key, port = key ? 443 : 
 			let url = new URL(request.url)
 			
 			if (request.method === "GET" && url.pathname === "/oauth")
-			{
-				handleAuthCode(event, redirectURL).catch(console.trace)
-				return
-			}
+				return handleAuthCode(request, redirectURL).catch(console.trace)
 			
 			if (request.method === "POST" && url.pathname === "/")
-			{
-				handleAuthRequest(event, redirectURL).catch(console.trace)
-				return
-			}
+				return handleAuthRequest(request, redirectURL).catch(console.trace)
 			
-			decline(event)
+			return decline()
 		},
 	)
 	
 	await server.finished
 }
 
-let handleAuthRequest = async (event, redirectURL) =>
+let handleAuthRequest = async (request, redirectURL) =>
 {
-	let request = event.request
-	
 	let url = new URL(request.url)
-	if (url.search)
-	{
-		decline(event)
-		return
-	}
+	if (url.search) return decline()
 	
 	let verifier = createState()
 	let state = createState()
@@ -94,13 +82,11 @@ let handleAuthRequest = async (event, redirectURL) =>
 	verifiers.set(state, verifier)
 	setTimeout(() => verifiers.delete(state), 500000)
 	
-	event.respondWith(Response.redirect(`${oauthBase}?${parameters}`, 303))
+	return Response.redirect(`${oauthBase}?${parameters}`, 303)
 }
 
-let handleAuthCode = async (event, redirectURL) =>
+let handleAuthCode = async (request, redirectURL) =>
 {
-	let request = event.request
-	
 	let url = new URL(request.url)
 	let parameters = url.searchParams
 	
@@ -108,18 +94,10 @@ let handleAuthCode = async (event, redirectURL) =>
 	let verifier = verifiers.get(state)
 	verifiers.delete(state)
 	
-	if (!verifier)
-	{
-		decline(event)
-		return
-	}
+	if (!verifier) return decline()
 	
 	let code = parameters.get("code")
-	if (!code)
-	{
-		decline(event)
-		return
-	}
+	if (!code) return decline()
 	
 	let response = await post(`${base}/token`,
 	{
@@ -130,20 +108,14 @@ let handleAuthCode = async (event, redirectURL) =>
 		client_id: clientID
 	})
 	
-	if (!response || !response.ok)
-	{
-		decline(event)
-		return
-	}
+	if (!response) return decline()
+	if (!response.ok) return decline()
 	
 	let json = await response.json()
-	if (!json.token_type || !json.access_token)
-	{
-		decline(event)
-		return
-	}
+	if (!json.token_type) return decline()
+	if (!json.access_token) return decline()
 	
 	handleToken(`${json.token_type} ${json.access_token}`).catch(console.trace)
 	
-	event.respondWith(Response.redirect(completedURL, 303))
+	return Response.redirect(completedURL, 303)
 }
