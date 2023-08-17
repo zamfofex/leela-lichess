@@ -51,12 +51,13 @@ export let listenAuth = async ({host = "0.0.0.0", cert, key, port = key ? 443 : 
 			if (request.method === "GET" && url.pathname === "/oauth")
 			{
 				handleAuthCode(event, redirectURL).catch(console.trace)
-				continue
+				return
 			}
-			else if (request.method === "POST" && url.pathname === "/")
+			
+			if (request.method === "POST" && url.pathname === "/")
 			{
 				handleAuthRequest(event, redirectURL).catch(console.trace)
-				continue
+				return
 			}
 			
 			decline(event)
