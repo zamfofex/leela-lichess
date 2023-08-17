@@ -91,8 +91,11 @@ if (args.cert || args.key)
 	opts.key = await Deno.readTextFile(args.key)
 }
 
+let port = ""
+if (opts.port) port = ":" + opts.port
+
 args.host ??= "0.0.0.0"
-args["oauth-url"] ??= `${args.cert ? "https" : "http"}://localhost:${opts.port}/oauth`
+args["oauth-url"] ??= `${args.cert ? "https" : "http"}://localhost${port}/oauth`
 
 args.lc0 ??= "lc0"
 

@@ -28,7 +28,7 @@ let base64 = bytes =>
 
 let encoder = new TextEncoder()
 
-let decline = event => event.respondWith(new Response("unspecified error", {status: 400}))
+let decline = event => event.respondWith(Response.redirect(helpURL, 303))
 
 let verifiers = new Map()
 
@@ -38,15 +38,14 @@ export let listenAuth = async ({host = "0.0.0.0", cert, key, port = key ? 443 : 
 	
 	redirectURL = new URL(redirectURL).href
 	
-	let listener
-	if (key) listener = Deno.listenTls({host, port, cert, key})
-	else listener = Deno.listen({host, port})
+	let options
+	if (key) options = {hostname: host, port, cert, key}
+	else options = {hostname: host, port}
 	
-	let handle = async conn =>
-	{
-		for await (let event of Deno.serveHttp(conn))
+	let server = Deno.serve(
+		options,
+		request =>
 		{
-			let request = event.request
 			let url = new URL(request.url)
 			
 			if (request.method === "GET" && url.pathname === "/oauth")
@@ -59,18 +58,12 @@ export let listenAuth = async ({host = "0.0.0.0", cert, key, port = key ? 443 : 
 				handleAuthRequest(event, redirectURL).catch(console.trace)
 				continue
 			}
-			else if (request.method === "GET")
-			{
-				event.respondWith(Response.redirect(helpURL, 303))
-				continue
-			}
 			
 			decline(event)
-		}
-	}
+		},
+	)
 	
-	for await (let conn of listener)
-		handle(conn).catch(console.trace)
+	await server.finished
 }
 
 let handleAuthRequest = async (event, redirectURL) =>

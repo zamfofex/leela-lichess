@@ -42,7 +42,9 @@ export let handleToken = async token =>
 		
 		if (!response.ok)
 		{
-			console.trace(await response.text())
+			let value = await response.json()
+			if (value.error === "No such token") await kv.delete(["lichess engine ids", token])
+			else console.trace(value)
 			return
 		}
 		
