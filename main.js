@@ -107,7 +107,7 @@ let forever = async action =>
 for await (let {key} of kv.list({prefix: ["lichess engine ids"]}))
 {
 	if (key.length !== 2) continue
-	handleToken(key[1]).catch(console.trace)
+	await handleToken(key[1]).catch(console.trace)
 }
 
 forever(() => listenAuth({host: args.host, redirectURL: args["oauth-url"], ...opts}))

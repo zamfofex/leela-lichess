@@ -105,7 +105,7 @@ let handleAuthCode = async (request, redirectURL) =>
 		grant_type: "authorization_code",
 		code_verifier: verifier,
 		redirect_uri: redirectURL,
-		client_id: clientID
+		client_id: clientID,
 	})
 	
 	if (!response) return decline()
